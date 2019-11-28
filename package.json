@@ -10,6 +10,9 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "array-first": "^1.0.2",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
+    "is-sorted": "^1.0.5",
     "slice.js": "^1.1.1",
     "vue": "^2.5.2",
     "vue-router": "^3.0.1"
