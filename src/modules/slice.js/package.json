@@ -1,0 +1,81 @@
+{
+  "_from": "slice.js",
+  "_id": "slice.js@1.1.1",
+  "_inBundle": false,
+  "_integrity": "sha1-EkjhmvVfmZw8GbjH+NCu6d/OeHg=",
+  "_location": "/slice.js",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "slice.js",
+    "name": "slice.js",
+    "escapedName": "slice.js",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "http://registry.npm.pt.mi.com/slice.js/download/slice.js-1.1.1.tgz",
+  "_shasum": "1248e19af55f999c3c19b8c7f8d0aee9dfce7878",
+  "_spec": "slice.js",
+  "_where": "/Users/wei/Desktop/OpenSource/源码/projects",
+  "author": {
+    "name": "hustcc"
+  },
+  "bugs": {
+    "url": "https://github.com/hustcc/slice.js/issues"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
+  "description": "nano version for slice of string and array like Python.",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-jest": "^21.2.0",
+    "babel-preset-env": "^1.6.1",
+    "coveralls": "^3.0.0",
+    "jest": "^21.2.1"
+  },
+  "homepage": "https://github.com/hustcc/slice.js#readme",
+  "jest": {
+    "testRegex": "(/test)\\.(ts|tsx|js)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "json"
+    ],
+    "collectCoverage": true,
+    "collectCoverageFrom": [
+      "src/**/*.{js}",
+      "!**/node_modules/**",
+      "!**/vendor/**"
+    ],
+    "moduleDirectories": [
+      "node_modules"
+    ],
+    "transform": {
+      "^.+\\.js?$": "babel-jest"
+    }
+  },
+  "keywords": [
+    "slice.js",
+    "slice"
+  ],
+  "license": "MIT",
+  "main": "lib/index.js",
+  "name": "slice.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hustcc/slice.js.git"
+  },
+  "scripts": {
+    "build": "babel src --out-dir lib && npm run test",
+    "test": "jest"
+  },
+  "version": "1.1.1"
+}
