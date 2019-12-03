@@ -1,0 +1,43 @@
+<template>
+  <div class="count">
+    {{ this.count }}
+    <br />
+    计算后：{{ this.getStateCount }}
+    <hr />
+    <button @click="add">+</button>
+    <button @click="reduction">-</button>
+  </div>
+</template>
+
+<script>
+import { mapState, mapGetters, mapActions } from "vuex";
+
+export default {
+  name: "count",
+  data() {
+    return {};
+  },
+  computed: {
+    ...mapState(["count"]),
+    ...mapGetters(["getStateCount"])
+  },
+  mounted() {
+    // console.log(Vue.config.devtools);
+  },
+  methods: {
+    ...mapActions(["addFun", "reductionFun"]),
+    add() {
+      this.addFun();
+      // this.$store.commit("add");
+      // this.$store.dispatch("addFun");
+    },
+    reduction() {
+      this.reductionFun();
+      // this.$store.commit("reduction");
+      // this.$store.dispatch("reductionFun");
+    }
+  }
+};
+</script>
+
+<style scoped></style>
