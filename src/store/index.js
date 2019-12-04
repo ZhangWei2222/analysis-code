@@ -4,19 +4,37 @@ import Vuex from "vuex";
 Vue.use(Vuex);
 
 const moduleA = {
-  state: { count: 1 }
+  namespaced: true,
+  state: { count: 1 },
+  mutations: {
+    add(state) {
+      state.count = state.count + 1;
+    },
+    reduction(state) {
+      state.count = state.count - 1;
+    }
+  }
   // mutations: { ... },
   // actions: { ... },
   // getters: { ... }
 };
 
 const moduleB = {
-  state: { count: 1 }
+  state: { count: 1 },
+  mutations: {
+    add(state) {
+      state.count = state.count + 1;
+    },
+    reduction(state) {
+      state.count = state.count - 1;
+    }
+  }
   // mutations: { ... },
   // actions: { ... }
 };
 
 const store = new Vuex.Store({
+  //   strict: true,
   state: {
     count: 1
   },
@@ -43,5 +61,5 @@ const store = new Vuex.Store({
   },
   modules: { a: moduleA, b: moduleB }
 });
-
+window.store = store;
 export default store;

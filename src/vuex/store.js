@@ -105,8 +105,9 @@ export class Store {
     }
   }
 
+  /* 调用mutation的commit方法 */
   commit(_type, _payload, _options) {
-    // check object-style commit
+    // 校验参数
     const { type, payload, options } = unifyObjectStyle(
       _type,
       _payload,
@@ -114,6 +115,7 @@ export class Store {
     );
 
     const mutation = { type, payload };
+    /* 取出type对应的mutation的方法 */
     const entry = this._mutations[type];
     if (!entry) {
       if (process.env.NODE_ENV !== "production") {
@@ -121,11 +123,13 @@ export class Store {
       }
       return;
     }
+    /* 执行mutation中的所有方法 */
     this._withCommit(() => {
       entry.forEach(function commitIterator(handler) {
         handler(payload);
       });
     });
+    /* 通知所有订阅者 */
     this._subscribers.forEach(sub => sub(mutation, this.state));
 
     if (process.env.NODE_ENV !== "production" && options && options.silent) {
@@ -136,12 +140,14 @@ export class Store {
     }
   }
 
+  /* 调用action的dispatch方法 */
   dispatch(_type, _payload) {
-    console.log(_type, _payload);
-    // check object-style dispatch
+    // 校验参数
     const { type, payload } = unifyObjectStyle(_type, _payload);
 
     const action = { type, payload };
+
+    /* actions中取出type对应的ation */
     const entry = this._actions[type];
     if (!entry) {
       if (process.env.NODE_ENV !== "production") {
@@ -161,6 +167,7 @@ export class Store {
       }
     }
 
+    /* 是数组则包装Promise形成一个新的Promise，只有一个则直接返回第0个 */
     const result =
       entry.length > 1
         ? Promise.all(entry.map(handler => handler(payload)))
@@ -181,6 +188,7 @@ export class Store {
     });
   }
 
+  /* 注册一个订阅函数，返回取消订阅的函数 */
   subscribe(fn) {
     return genericSubscribe(fn, this._subscribers);
   }
@@ -190,6 +198,7 @@ export class Store {
     return genericSubscribe(subs, this._actionSubscribers);
   }
 
+  /* 观察一个getter方法 */
   watch(getter, cb, options) {
     if (process.env.NODE_ENV !== "production") {
       assert(
@@ -210,7 +219,9 @@ export class Store {
     });
   }
 
+  /* 注册一个动态module，当业务进行异步加载的时候，可以通过该接口进行注册动态module */
   registerModule(path, rawModule, options = {}) {
+    /* 转化称Array */
     if (typeof path === "string") path = [path];
 
     if (process.env.NODE_ENV !== "production") {
@@ -221,7 +232,9 @@ export class Store {
       );
     }
 
+    /* 注册 */
     this._modules.register(path, rawModule);
+    /* 初始化module */
     installModule(
       this,
       this.state,
@@ -229,22 +242,28 @@ export class Store {
       this._modules.get(path),
       options.preserveState
     );
-    // reset store to update getters...
+    /* 通过vm重设store，新建Vue对象使用Vue内部的响应式实现注册state以及computed */
     resetStoreVM(this, this.state);
   }
 
+  /* 注销一个动态module */
   unregisterModule(path) {
+    /* 转化称Array */
     if (typeof path === "string") path = [path];
 
     if (process.env.NODE_ENV !== "production") {
       assert(Array.isArray(path), `module path must be a string or an Array.`);
     }
 
+    /* 注销 */
     this._modules.unregister(path);
     this._withCommit(() => {
+      /* 获取父级的state */
       const parentState = getNestedState(this.state, path.slice(0, -1));
+      /* 从父级中删除 */
       Vue.delete(parentState, path[path.length - 1]);
     });
+    /* 重制store */
     resetStore(this);
   }
 
@@ -253,6 +272,7 @@ export class Store {
     resetStore(this, true);
   }
 
+  /* 调用withCommit修改state的值时会将store的committing值置为true，内部会有断言检查该值，在严格模式下只允许使用mutation来修改store中的值，而不允许直接修改store的数值 */
   _withCommit(fn) {
     const committing = this._committing;
     this._committing = true;
@@ -261,6 +281,7 @@ export class Store {
   }
 }
 
+/* 注册一个订阅函数，返回取消订阅的函数 */
 function genericSubscribe(fn, subs) {
   if (subs.indexOf(fn) < 0) {
     subs.push(fn);
@@ -273,6 +294,7 @@ function genericSubscribe(fn, subs) {
   };
 }
 
+/* 重制store */
 function resetStore(store, hot) {
   store._actions = Object.create(null);
   store._mutations = Object.create(null);
@@ -285,7 +307,9 @@ function resetStore(store, hot) {
   resetStoreVM(store, state, hot);
 }
 
+/* 通过vm重设store，新建Vue对象使用Vue内部的响应式实现注册state以及computed */
 function resetStoreVM(store, state, hot) {
+  /* 存放之前的vm对象 */
   const oldVm = store._vm;
 
   // bind store public getters
@@ -294,6 +318,8 @@ function resetStoreVM(store, state, hot) {
   store._makeLocalGettersCache = Object.create(null);
   const wrappedGetters = store._wrappedGetters;
   const computed = {};
+
+  /* 通过Object.defineProperty为每一个getter方法设置get方法，比如获取this.$store.getters.test的时候获取的是store._vm.test，也就是Vue对象的computed属性 */
   forEachValue(wrappedGetters, (fn, key) => {
     // use computed to leverage its lazy-caching mechanism
     // direct inline function use will lead to closure preserving oldVm.
@@ -309,7 +335,9 @@ function resetStoreVM(store, state, hot) {
   // suppress warnings just in case the user has added
   // some funky global mixins
   const silent = Vue.config.silent;
+  /* Vue.config.silent暂时设置为true的目的是在new一个Vue实例的过程中不会报出一切警告 */
   Vue.config.silent = true;
+  /*  这里new了一个Vue对象，运用Vue内部的响应式实现注册state以及computed */
   store._vm = new Vue({
     data: {
       $$state: state
@@ -319,11 +347,13 @@ function resetStoreVM(store, state, hot) {
   Vue.config.silent = silent;
 
   // enable strict mode for new vm
+  /* 使能严格模式，保证修改store只能通过mutation */
   if (store.strict) {
     enableStrictMode(store);
   }
 
   if (oldVm) {
+    /* 解除旧vm的state的引用，以及销毁旧的Vue对象 */
     if (hot) {
       // dispatch changes in all subscribed watchers
       // to force getter re-evaluation for hot reloading.
@@ -408,7 +438,6 @@ function installModule(store, rootState, path, module, hot) {
 
   /* 递归安装mudule */
   module.forEachChild((child, key) => {
-    console.log(child, key);
     installModule(store, rootState, path.concat(key), child, hot);
   });
 }
@@ -516,7 +545,9 @@ function registerMutation(store, type, handler, local) {
   });
 }
 
+/* 遍历注册action */
 function registerAction(store, type, handler, local) {
+  /* 取出type对应的action */
   const entry = store._actions[type] || (store._actions[type] = []);
   entry.push(function wrappedActionHandler(payload) {
     let res = handler.call(
@@ -531,10 +562,13 @@ function registerAction(store, type, handler, local) {
       },
       payload
     );
+    /* 判断是否是Promise */
     if (!isPromise(res)) {
+      /* 不是Promise对象的时候转化称Promise对象 */
       res = Promise.resolve(res);
     }
     if (store._devtoolHook) {
+      /* 存在devtool插件的时候，如果有错误触发vuex的error给devtool */
       return res.catch(err => {
         store._devtoolHook.emit("vuex:error", err);
         throw err;
@@ -562,6 +596,7 @@ function registerGetter(store, type, rawGetter, local) {
   };
 }
 
+/* 使用严格模式 */
 function enableStrictMode(store) {
   store._vm.$watch(
     function() {
@@ -569,6 +604,7 @@ function enableStrictMode(store) {
     },
     () => {
       if (process.env.NODE_ENV !== "production") {
+        /* 检测store中的_committing的值，如果是false代表不是通过mutation的方法修改的 */
         assert(
           store._committing,
           `do not mutate vuex store state outside mutation handlers.`
@@ -579,6 +615,7 @@ function enableStrictMode(store) {
   );
 }
 
+/* 获取父级的state */
 function getNestedState(state, path) {
   return path.reduce((state, key) => state[key], state);
 }

@@ -23,15 +23,20 @@ export default {
   },
   mounted() {
     // console.log(Vue.config.devtools);
+    this.$store.registerModule("c", {
+      state: { count: 3 }
+    });
   },
   methods: {
     ...mapActions(["addFun", "reductionFun"]),
     add() {
       this.addFun();
+      this.$store.unregisterModule("c");
       // this.$store.commit("add");
       // this.$store.dispatch("addFun");
     },
     reduction() {
+      this.$store.watch(this.getStateCount);
       this.reductionFun();
       // this.$store.commit("reduction");
       // this.$store.dispatch("reductionFun");
