@@ -34,7 +34,7 @@ const moduleB = {
 };
 
 const store = new Vuex.Store({
-  //   strict: true,
+  // strict: true,
   state: {
     count: 1
   },
@@ -45,7 +45,10 @@ const store = new Vuex.Store({
   },
   mutations: {
     add(state) {
-      state.count = state.count + 1;
+      // state.count = state.count + 1;
+      new Promise(resolve => {
+        setTimeout(() => (state.count = state.count + 1), 3000);
+      });
     },
     reduction(state) {
       state.count = state.count - 1;
