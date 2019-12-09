@@ -18,7 +18,8 @@ export default {
     return {};
   },
   computed: {
-    ...mapState(["count"]),
+    ...mapState("a", { count: state => state.count }, ["count"]),
+    // ...mapState(["count"]),
     ...mapGetters(["getStateCount"])
   },
   mounted() {

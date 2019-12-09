@@ -1,7 +1,7 @@
 import { isObject } from "./util";
 
 /**
- * Reduce the code which written in Vue.js for getting the state.
+ * 为组件创建计算属性以返回 Vuex store 中的状态
  * @param {String} [namespace] - Module's namespace
  * @param {Object|Array} states # Object's item can be a function which accept state and getters for param, you can do something for state and getters in it.
  * @param {Object}
@@ -18,7 +18,9 @@ export const mapState = normalizeNamespace((namespace, states) => {
     res[key] = function mappedState() {
       let state = this.$store.state;
       let getters = this.$store.getters;
+      // 传了参数 namespace
       if (namespace) {
+        // 用 namespace 从 store 中找一个模块
         const module = getModuleByNamespace(this.$store, "mapState", namespace);
         if (!module) {
           return;
@@ -30,20 +32,21 @@ export const mapState = normalizeNamespace((namespace, states) => {
         ? val.call(this, state, getters)
         : state[val];
     };
-    // mark vuex getter for devtools
+    // 标记为 vuex 方便在 devtools 显示
     res[key].vuex = true;
   });
   return res;
 });
 
 /**
- * Reduce the code which written in Vue.js for committing the mutation
+ * 创建组件方法分发 action
  * @param {String} [namespace] - Module's namespace
  * @param {Object|Array} mutations # Object's item can be a function which accept `commit` function as the first param, it can accept anthor params. You can commit mutation and do any other things in this function. specially, You need to pass anthor params from the mapped function.
  * @return {Object}
  */
 export const mapMutations = normalizeNamespace((namespace, mutations) => {
   const res = {};
+  // 省略代码： 非生产环境 判断参数 actions  必须是数组或者是对象
   if (process.env.NODE_ENV !== "production" && !isValidMap(mutations)) {
     console.error(
       "[vuex] mapMutations: mapper parameter must be either an Array or an Object"
@@ -73,13 +76,14 @@ export const mapMutations = normalizeNamespace((namespace, mutations) => {
 });
 
 /**
- * Reduce the code which written in Vue.js for getting the getters
+ * 为组件创建计算属性以返回 getter 的返回值
  * @param {String} [namespace] - Module's namespace
  * @param {Object|Array} getters
  * @return {Object}
  */
 export const mapGetters = normalizeNamespace((namespace, getters) => {
   const res = {};
+  // 省略代码：非生产环境 判断参数 getters 必须是数组或者是对象
   if (process.env.NODE_ENV !== "production" && !isValidMap(getters)) {
     console.error(
       "[vuex] mapGetters: mapper parameter must be either an Array or an Object"
@@ -95,6 +99,7 @@ export const mapGetters = normalizeNamespace((namespace, getters) => {
       ) {
         return;
       }
+      // 省略代码：匹配不到 getter
       if (
         process.env.NODE_ENV !== "production" &&
         !(val in this.$store.getters)
@@ -102,16 +107,17 @@ export const mapGetters = normalizeNamespace((namespace, getters) => {
         console.error(`[vuex] unknown getter: ${val}`);
         return;
       }
+
       return this.$store.getters[val];
     };
-    // mark vuex getter for devtools
+    // 标记为 vuex 方便在 devtools 显示
     res[key].vuex = true;
   });
   return res;
 });
 
 /**
- * Reduce the code which written in Vue.js for dispatch the action
+ * 创建组件方法提交 mutation
  * @param {String} [namespace] - Module's namespace
  * @param {Object|Array} actions # Object's item can be a function which accept `dispatch` function as the first param, it can accept anthor params. You can dispatch action and do any other things in this function. specially, You need to pass anthor params from the mapped function.
  * @return {Object}
@@ -147,11 +153,12 @@ export const mapActions = normalizeNamespace((namespace, actions) => {
 });
 
 /**
- * Rebinding namespace param for mapXXX function in special scoped, and return them by simple object
+ * 创建基于命名空间的组件绑定辅助函数
  * @param {String} namespace
  * @return {Object}
  */
 export const createNamespacedHelpers = namespace => ({
+  // bind(null) 严格模式下，apState等的函数 this 指向就是 null
   mapState: mapState.bind(null, namespace),
   mapGetters: mapGetters.bind(null, namespace),
   mapMutations: mapMutations.bind(null, namespace),
@@ -159,7 +166,7 @@ export const createNamespacedHelpers = namespace => ({
 });
 
 /**
- * Normalize the map
+ * 标准化统一 map，最终返回的是数组
  * normalizeMap([1, 2, 3]) => [ { key: 1, val: 1 }, { key: 2, val: 2 }, { key: 3, val: 3 } ]
  * normalizeMap({a: 1, b: 2, c: 3}) => [ { key: 'a', val: 1 }, { key: 'b', val: 2 }, { key: 'c', val: 3 } ]
  * @param {Array|Object} map
@@ -175,7 +182,6 @@ function normalizeMap(map) {
 }
 
 /**
- * Validate whether given map is valid or not
  * @param {*} map
  * @return {Boolean}
  */
@@ -184,16 +190,25 @@ function isValidMap(map) {
 }
 
 /**
- * Return a function expect two param contains namespace and map. it will normalize the namespace and then the param's function will handle the new namespace and the map.
+ * 标准化统一命名空间
  * @param {Function} fn
  * @return {Function}
  */
 function normalizeNamespace(fn) {
   return (namespace, map) => {
+    // 命名空间没传，交换参数，namespace 为空字符串
     if (typeof namespace !== "string") {
       map = namespace;
       namespace = "";
     } else if (namespace.charAt(namespace.length - 1) !== "/") {
+      // 如果是字符串，最后一个字符不是 / 添加 /
+      // 因为 _modulesNamespaceMap 存储的是这样的结构。
+      /**
+       * _modulesNamespaceMap:
+          cart/: {}
+          products/: {}
+        }
+       * */
       namespace += "/";
     }
     return fn(namespace, map);
@@ -208,6 +223,7 @@ function normalizeNamespace(fn) {
  * @return {Object}
  */
 function getModuleByNamespace(store, helper, namespace) {
+  // _modulesNamespaceMap 这个变量在 class Store installModule 函数中赋值的
   const module = store._modulesNamespaceMap[namespace];
   if (process.env.NODE_ENV !== "production" && !module) {
     console.error(
