@@ -9,7 +9,12 @@
 export default {
   name: "App",
   mounted() {
-    console.log(this.$route);
+    console.log(
+      this.$router.getMatchedComponents({
+        path: "/count",
+        name: "count"
+      })
+    );
   }
 };
 </script>

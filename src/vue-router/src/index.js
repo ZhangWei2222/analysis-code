@@ -71,15 +71,21 @@ export default class VueRouter {
     }
   }
 
+  // 使用：this.$router.match('/count')
+  // 输入参数raw（/user/4739284722这种形式,类似route的path），current，redirectedFrom，结果返回匹配route
   match(raw: RawLocation, current?: Route, redirectedFrom?: Location): Route {
     return this.matcher.match(raw, current, redirectedFrom);
   }
 
+  // 使用：this.$router.currentRoute
+  // 用于获取当前history.current，也就是当前route，包括path、component、meta等
   get currentRoute(): ?Route {
     return this.history && this.history.current;
   }
 
+  // 初始化路由
   init(app: any /* Vue component instance */) {
+    // assert是个断言，测试install.installed是否为真，为真，则说明vueRouter已经安装了
     process.env.NODE_ENV !== "production" &&
       assert(
         install.installed,
@@ -87,11 +93,13 @@ export default class VueRouter {
           `before creating root instance.`
       );
 
-    // 保存组件实例
+    // 保存组件实例：将vue实例推到apps列表中，install里面最初是将vue根实例推进去的
     this.apps.push(app);
 
     // set up app destroyed handler
     // https://github.com/vuejs/vue-router/issues/2639
+    // app被destroyed时候，会$emit ‘hook:destroyed’事件，监听这个事件，执行下面方法
+    // 从apps 里将app移除
     app.$once("hook:destroyed", () => {
       // clean out app from this.apps array once destroyed
       const index = this.apps.indexOf(app);
@@ -101,23 +109,25 @@ export default class VueRouter {
       if (this.app === app) this.app = this.apps[0] || null;
     });
 
-    // main app previously initialized
-    // return as we don't need to set up new history listener
     // 如果根组件已经有了就返回
     if (this.app) {
       return;
     }
 
+    // 赋值路由模式
     this.app = app;
 
     const history = this.history;
 
+    // 判断路由模式，并根据不同路由模式进行跳转。hashHistory需要监听hashchange和popshate两个事件，而html5History监听popstate事件
     if (history instanceof HTML5History) {
       history.transitionTo(history.getCurrentLocation());
     } else if (history instanceof HashHistory) {
+      // 添加 hashchange 监听
       const setupHashListener = () => {
         history.setupListeners();
       };
+      // 路由跳转
       history.transitionTo(
         history.getCurrentLocation(),
         setupHashListener,
@@ -125,6 +135,8 @@ export default class VueRouter {
       );
     }
 
+    // 该回调会在 transitionTo 中调用
+    // 对组件的 _route 属性进行赋值，触发组件渲染；且将apps中的组件的_route全部更新至最新的
     history.listen(route => {
       this.apps.forEach(app => {
         app._route = route;
@@ -132,26 +144,32 @@ export default class VueRouter {
     });
   }
 
+  // 将回调方法fn注册到beforeHooks里。registerHook会返回，fn执行后的callback方法，功能是将fn从beforeHooks删除
   beforeEach(fn: Function): Function {
     return registerHook(this.beforeHooks, fn);
   }
 
+  // 将回调方法fn注册到resolveHooks里。registerHook会返回，fn执行后的callback方法，功能是将fn从resolveHooks删除
   beforeResolve(fn: Function): Function {
     return registerHook(this.resolveHooks, fn);
   }
 
+  // 将回调方法fn注册到afterHooks里。registerHook会返回，fn执行后的callback方法，功能是将fn从afterHooks删除
   afterEach(fn: Function): Function {
     return registerHook(this.afterHooks, fn);
   }
 
+  // 添加一个回调函数，它会在首次路由跳转完成时被调用，此方法通常用于等待异步的导航钩子完成，比如在进行服务端渲染中
   onReady(cb: Function, errorCb?: Function) {
     this.history.onReady(cb, errorCb);
   }
 
+  // 报错
   onError(errorCb: Function) {
     this.history.onError(errorCb);
   }
 
+  // 新增路由跳转
   push(location: RawLocation, onComplete?: Function, onAbort?: Function) {
     // $flow-disable-line
     if (!onComplete && !onAbort && typeof Promise !== "undefined") {
@@ -163,6 +181,7 @@ export default class VueRouter {
     }
   }
 
+  // 路由替换
   replace(location: RawLocation, onComplete?: Function, onAbort?: Function) {
     // $flow-disable-line
     if (!onComplete && !onAbort && typeof Promise !== "undefined") {
@@ -174,18 +193,24 @@ export default class VueRouter {
     }
   }
 
+  // 前进n条路由
   go(n: number) {
     this.history.go(n);
   }
 
+  // 后退一步
   back() {
     this.go(-1);
   }
 
+  // 前进一步
   forward() {
     this.go(1);
   }
 
+  // 使用：this.$router.getMatchedComponents("/")或者
+  // this.$router.getMatchedComponents({path: "/count",name: "count"})
+  // 返回匹配的组件
   getMatchedComponents(to?: RawLocation | Route): Array<any> {
     const route: any = to
       ? to.matched
@@ -205,6 +230,7 @@ export default class VueRouter {
     );
   }
 
+  // 如果this.$router.getMatchedComponents("/")参数是个path，会来到这里解析
   resolve(
     to: RawLocation,
     current?: Route,
@@ -233,14 +259,17 @@ export default class VueRouter {
     };
   }
 
+  // 动态新增路由
   addRoutes(routes: Array<RouteConfig>) {
     this.matcher.addRoutes(routes);
+    // START是啥？？？？？？？
     if (this.history.current !== START) {
       this.history.transitionTo(this.history.getCurrentLocation());
     }
   }
 }
 
+// 将callback（参数fn）插入list，返回一个方法，方法实现的是从list中删除fn。也就是在callback执行后，通过调用这个方法，可以将fn从list中移除
 function registerHook(list: Array<any>, fn: Function): Function {
   list.push(fn);
   return () => {
@@ -249,6 +278,7 @@ function registerHook(list: Array<any>, fn: Function): Function {
   };
 }
 
+// 建立路由在浏览器中显示的格式
 function createHref(base: string, fullPath: string, mode) {
   var path = mode === "hash" ? "#" + fullPath : fullPath;
   return base ? cleanPath(base + "/" + path) : path;
