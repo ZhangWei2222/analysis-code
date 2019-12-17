@@ -1,132 +1,139 @@
 /* @flow */
 
-import type VueRouter from '../index'
-import { stringifyQuery } from './query'
+import type VueRouter from "../index";
+import { stringifyQuery } from "./query";
 
-const trailingSlashRE = /\/?$/
+const trailingSlashRE = /\/?$/;
 
-export function createRoute (
+export function createRoute(
   record: ?RouteRecord,
   location: Location,
   redirectedFrom?: ?Location,
   router?: VueRouter
 ): Route {
-  const stringifyQuery = router && router.options.stringifyQuery
+  const stringifyQuery = router && router.options.stringifyQuery;
 
-  let query: any = location.query || {}
+  // 克隆参数
+  let query: any = location.query || {};
   try {
-    query = clone(query)
+    query = clone(query);
   } catch (e) {}
 
+  // 创建路由对象
   const route: Route = {
     name: location.name || (record && record.name),
     meta: (record && record.meta) || {},
-    path: location.path || '/',
-    hash: location.hash || '',
+    path: location.path || "/",
+    hash: location.hash || "",
     query,
     params: location.params || {},
     fullPath: getFullPath(location, stringifyQuery),
+    // 根据记录层级的得到所有匹配的 路由记录
     matched: record ? formatMatch(record) : []
-  }
+  };
   if (redirectedFrom) {
-    route.redirectedFrom = getFullPath(redirectedFrom, stringifyQuery)
+    route.redirectedFrom = getFullPath(redirectedFrom, stringifyQuery);
   }
-  return Object.freeze(route)
+  // 让路由对象不可修改
+  return Object.freeze(route);
 }
 
-function clone (value) {
+function clone(value) {
   if (Array.isArray(value)) {
-    return value.map(clone)
-  } else if (value && typeof value === 'object') {
-    const res = {}
+    return value.map(clone);
+  } else if (value && typeof value === "object") {
+    const res = {};
     for (const key in value) {
-      res[key] = clone(value[key])
+      res[key] = clone(value[key]);
     }
-    return res
+    return res;
   } else {
-    return value
+    return value;
   }
 }
 
 // the starting route that represents the initial state
 export const START = createRoute(null, {
-  path: '/'
-})
+  path: "/"
+});
 
-function formatMatch (record: ?RouteRecord): Array<RouteRecord> {
-  const res = []
+// 获得包含当前路由的所有嵌套路径片段的路由记录
+// 包含从根路由到当前路由的匹配记录，从上至下
+function formatMatch(record: ?RouteRecord): Array<RouteRecord> {
+  const res = [];
   while (record) {
-    res.unshift(record)
-    record = record.parent
+    res.unshift(record);
+    record = record.parent;
   }
-  return res
+  return res;
 }
 
-function getFullPath (
-  { path, query = {}, hash = '' },
-  _stringifyQuery
-): string {
-  const stringify = _stringifyQuery || stringifyQuery
-  return (path || '/') + stringify(query) + hash
+function getFullPath({ path, query = {}, hash = "" }, _stringifyQuery): string {
+  const stringify = _stringifyQuery || stringifyQuery;
+  return (path || "/") + stringify(query) + hash;
 }
 
-export function isSameRoute (a: Route, b: ?Route): boolean {
+export function isSameRoute(a: Route, b: ?Route): boolean {
   if (b === START) {
-    return a === b
+    return a === b;
   } else if (!b) {
-    return false
+    return false;
   } else if (a.path && b.path) {
     return (
-      a.path.replace(trailingSlashRE, '') === b.path.replace(trailingSlashRE, '') &&
+      a.path.replace(trailingSlashRE, "") ===
+        b.path.replace(trailingSlashRE, "") &&
       a.hash === b.hash &&
       isObjectEqual(a.query, b.query)
-    )
+    );
   } else if (a.name && b.name) {
     return (
       a.name === b.name &&
       a.hash === b.hash &&
       isObjectEqual(a.query, b.query) &&
       isObjectEqual(a.params, b.params)
-    )
+    );
   } else {
-    return false
+    return false;
   }
 }
 
-function isObjectEqual (a = {}, b = {}): boolean {
+function isObjectEqual(a = {}, b = {}): boolean {
   // handle null value #1566
-  if (!a || !b) return a === b
-  const aKeys = Object.keys(a)
-  const bKeys = Object.keys(b)
+  if (!a || !b) return a === b;
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
   if (aKeys.length !== bKeys.length) {
-    return false
+    return false;
   }
   return aKeys.every(key => {
-    const aVal = a[key]
-    const bVal = b[key]
+    const aVal = a[key];
+    const bVal = b[key];
     // check nested equality
-    if (typeof aVal === 'object' && typeof bVal === 'object') {
-      return isObjectEqual(aVal, bVal)
+    if (typeof aVal === "object" && typeof bVal === "object") {
+      return isObjectEqual(aVal, bVal);
     }
-    return String(aVal) === String(bVal)
-  })
+    return String(aVal) === String(bVal);
+  });
 }
 
-export function isIncludedRoute (current: Route, target: Route): boolean {
+export function isIncludedRoute(current: Route, target: Route): boolean {
   return (
-    current.path.replace(trailingSlashRE, '/').indexOf(
-      target.path.replace(trailingSlashRE, '/')
-    ) === 0 &&
+    current.path
+      .replace(trailingSlashRE, "/")
+      .indexOf(target.path.replace(trailingSlashRE, "/")) === 0 &&
     (!target.hash || current.hash === target.hash) &&
     queryIncludes(current.query, target.query)
-  )
+  );
 }
 
-function queryIncludes (current: Dictionary<string>, target: Dictionary<string>): boolean {
+function queryIncludes(
+  current: Dictionary<string>,
+  target: Dictionary<string>
+): boolean {
   for (const key in target) {
     if (!(key in current)) {
-      return false
+      return false;
     }
   }
-  return true
+  return true;
 }

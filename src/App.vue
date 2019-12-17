@@ -1,7 +1,8 @@
 <template>
   <div id="app">
     <img src="./assets/logo.png" />
-    <router-view />
+    <!-- <router-view /> -->
+    <router-link to="/to/title1">``</router-link>
   </div>
 </template>
 
@@ -9,12 +10,7 @@
 export default {
   name: "App",
   mounted() {
-    console.log(
-      this.$router.getMatchedComponents({
-        path: "/count",
-        name: "count"
-      })
-    );
+    console.log(this.$route);
   }
 };
 </script>

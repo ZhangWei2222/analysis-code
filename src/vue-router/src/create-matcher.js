@@ -34,19 +34,28 @@ export function createMatcher(
     currentRoute?: Route,
     redirectedFrom?: Location
   ): Route {
+    // 序列化 url
+    // 比如对于该 url 来说 /abc?foo=bar&baz=qux#hello
+    // 会序列化路径为 /abc
+    // 哈希为 #hello
+    // 参数为 foo: 'bar', baz: 'qux'
     const location = normalizeLocation(raw, currentRoute, false, router);
     const { name } = location;
 
+    // 如果是命名路由，就判断记录中是否有该命名路由配置
     if (name) {
       const record = nameMap[name];
       if (process.env.NODE_ENV !== "production") {
         warn(record, `Route with name '${name}' does not exist`);
       }
+      // 没找到表示没有匹配的路由
       if (!record) return _createRoute(null, location);
+      // 获取所有必须的params。如果optional为true说明params不是必须的
       const paramNames = record.regex.keys
         .filter(key => !key.optional)
         .map(key => key.name);
 
+      // 参数处理
       if (typeof location.params !== "object") {
         location.params = {};
       }
@@ -66,16 +75,20 @@ export function createMatcher(
       );
       return _createRoute(record, location, redirectedFrom);
     } else if (location.path) {
+      // 非命名路由处理
       location.params = {};
       for (let i = 0; i < pathList.length; i++) {
+        // 查找记录
         const path = pathList[i];
         const record = pathMap[path];
+        // 如果匹配路由，则创建路由
+        // pathMap[path] = 路由记录
         if (matchRoute(record.regex, location.path, location.params)) {
           return _createRoute(record, location, redirectedFrom);
         }
       }
     }
-    // no match
+    // 没有匹配的路由
     return _createRoute(null, location);
   }
 
@@ -175,17 +188,20 @@ export function createMatcher(
     return _createRoute(null, location);
   }
 
+  // 根据条件创建不同的路由
   function _createRoute(
     record: ?RouteRecord,
     location: Location,
     redirectedFrom?: Location
   ): Route {
+    // 重定向和别名逻辑
     if (record && record.redirect) {
       return redirect(record, redirectedFrom || location);
     }
     if (record && record.matchAs) {
       return alias(record, location, record.matchAs);
     }
+    // 创建路由对象
     return createRoute(record, location, redirectedFrom, router);
   }
 

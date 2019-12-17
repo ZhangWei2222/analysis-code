@@ -39,7 +39,7 @@ export default class VueRouter {
     this.beforeHooks = [];
     this.resolveHooks = [];
     this.afterHooks = [];
-    // 路由匹配对象
+    // 创建路由匹配对象
     this.matcher = createMatcher(options.routes || [], this);
 
     // 根据 mode 采取不同的路由方式

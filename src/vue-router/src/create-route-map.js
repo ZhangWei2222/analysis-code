@@ -15,7 +15,6 @@ export function createRouteMap(
   nameMap: Dictionary<RouteRecord>
 } {
   // 创建映射表
-  // the path list is used to control path matching priority
   const pathList: Array<string> = oldPathList || [];
   // path 路由 map
   const pathMap: Dictionary<RouteRecord> = oldPathMap || Object.create(null);
@@ -79,15 +78,18 @@ function addRouteRecord(
     );
   }
 
+  // 编译正则的选项
   const pathToRegexpOptions: PathToRegexpOptions =
     route.pathToRegexpOptions || {};
-  // 格式化 url，替换 /
+  normalizePath;
+  // 格式化 url，会删除末尾的/，如果route是子级，会连接父级和子级的path，形成一个完整的path
   const normalizedPath = normalizePath(
     path,
     parent,
     pathToRegexpOptions.strict
   );
 
+  // 匹配规则是否大小写敏感？(默认值：false)
   if (typeof route.caseSensitive === "boolean") {
     pathToRegexpOptions.sensitive = route.caseSensitive;
   }
@@ -113,9 +115,6 @@ function addRouteRecord(
   };
 
   if (route.children) {
-    // Warn if route is named, does not redirect and has a default child route.
-    // If users navigate to this route by name, the default child will
-    // not be rendered (GH Issue #629)
     // 递归路由配置的 children 属性，添加路由记录
     if (process.env.NODE_ENV !== "production") {
       if (
@@ -134,6 +133,7 @@ function addRouteRecord(
       }
     }
     route.children.forEach(child => {
+      // matchAs 路由别名
       const childMatchAs = matchAs
         ? cleanPath(`${matchAs}/${child.path}`)
         : undefined;
