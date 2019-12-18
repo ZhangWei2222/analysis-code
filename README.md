@@ -2,6 +2,9 @@
 
 跟随 awesome-micro-npm-packages 库 的脚步，决定不定时更新对小库的代码分析
 
+12.3 开始vuex源码分析
+12.13 开始vue-router源码分析
+
 ## 11.28
 
 ### slice.js
