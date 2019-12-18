@@ -148,13 +148,19 @@ export class History {
 
     // 交叉比对当前路由的路由记录和现在的这个路由的路由记录
     // 以便能准确得到父子路由更新的情况下可以确切的知道
-    // 哪些组件需要更新 哪些不需要更新
+    // 哪些组件可以复用，需要更新、失活
     const { updated, deactivated, activated } = resolveQueue(
       this.current.matched,
       route.matched
     );
 
-    // 导航守卫数组
+    /* NavigationGuard是一个标准的路由守卫的签名，经过 queue 数组内部这些函数的转换最终会返回路由守卫组成的数组
+    declare type NavigationGuard = (
+      to: Route,
+      from: Route,
+      next: (to?: RawLocation | false | Function | void) => void
+    ) => any
+    */
     const queue: Array<?NavigationGuard> = [].concat(
       // 失活的组件钩子
       extractLeaveGuards(deactivated),
@@ -276,7 +282,7 @@ function normalizeBase(base: ?string): string {
 
 // 交叉比对当前路由的路由记录和现在的这个路由的路由记录
 // 以便能准确得到父子路由更新的情况下可以确切的知道
-// 哪些组件需要更新 哪些不需要更新
+// 哪些组件可以复用，需要更新、失活
 function resolveQueue(
   current: Array<RouteRecord>,
   next: Array<RouteRecord>
