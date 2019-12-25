@@ -46,14 +46,22 @@ export default class VueRouter {
     let mode = options.mode || "hash";
     this.fallback =
       mode === "history" && !supportsPushState && options.fallback !== false;
+
+    // 如果浏览器不支持，'history'模式需回滚为’hash‘模式
     if (this.fallback) {
       mode = "hash";
     }
+    // 如果不在浏览器环境下运行，强制为'abstract'模式
     if (!inBrowser) {
       mode = "abstract";
     }
     this.mode = mode;
 
+    /** 根据mode确定history实际的类并实例化,之后的push replace等调的是具体history对象的方法
+     * @Router 实例
+     * @base 应用的基路径
+     * @fallback History 模式，但不支持 History 而被转成 Hash 模式
+     */
     switch (mode) {
       case "history":
         this.history = new HTML5History(this, options.base);

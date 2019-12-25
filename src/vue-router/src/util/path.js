@@ -71,7 +71,7 @@ export function parsePath(
   };
 }
 
-// 双斜杠全局替换成单斜杠
+// 将双斜杠替换成单斜杠，保证 url 路径正确
 export function cleanPath(path: string): string {
   return path.replace(/\/\//g, "/");
 }

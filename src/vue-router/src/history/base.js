@@ -162,15 +162,15 @@ export class History {
     ) => any
     */
     const queue: Array<?NavigationGuard> = [].concat(
-      // 失活的组件钩子
+      // 返回离开组件的 beforeRouteLeave 钩子函数 （数组：子 => 父）
       extractLeaveGuards(deactivated),
-      // 全局 beforeEach 钩子
+      // 返回路由实例（全局）的 beforeEach 钩子函数 （数组）
       this.router.beforeHooks,
-      // 在当前路由改变，但是该组件被复用时调用
+      // 返回当前组件的 beforeRouteUpdate 钩子函数 （数组：父 => 子）
       extractUpdateHooks(updated),
-      // 需要渲染组件 enter 守卫钩子
+      // 返回当前组件的 beforeEnter 钩子函数 （数组）
       activated.map(m => m.beforeEnter),
-      // 解析异步路由组件
+      // 解析异步路由组件（同样会返回一个导航守卫函数的签名，但是用不到 to,from 这两个参数）
       resolveAsyncComponents(activated)
     );
 
@@ -309,12 +309,22 @@ function resolveQueue(
   };
 }
 
+/*
+ ** @records 删除的路由记录
+ ** @name beforeRouteLeave，即最终触发的是beforeRouteLeave守卫
+ */
 function extractGuards(
   records: Array<RouteRecord>,
   name: string,
   bind: Function,
   reverse?: boolean
 ): Array<?Function> {
+  /*
+   ** @def 视图名对应的组件配置项（因为 vue-router 支持命名视图所以可能会有多个视图名，大部分情况为 default，及使用默认视图），当是异步路由时，def为异步返回路由的函数
+   ** @instance 组件实例
+   ** @match 当前遍历到的路由记录
+   ** @key 视图名
+   */
   const guards = flatMapComponents(records, (def, instance, match, key) => {
     // 找出组件中对应的钩子函数
     const guard = extractGuard(def, name);

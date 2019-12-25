@@ -11,11 +11,8 @@ export function resolveAsyncComponents(matched: Array<RouteRecord>): Function {
     let error = null;
 
     flatMapComponents(matched, (def, _, match, key) => {
-      // if it's a function and doesn't have cid attached,
-      // assume it's an async component resolve function.
-      // we are not using Vue's default async resolving mechanism because
-      // we want to halt the navigation until the incoming component has been
-      // resolved.
+      // vue-router 没使用 Vue 核心库解析异步组件的函数，原因是希望能够实现停止路由跳转知道懒加载的组件被解析成功
+
       // 判断是否是异步组件
       if (typeof def === "function" && def.cid === undefined) {
         hasAsync = true;
@@ -88,7 +85,12 @@ export function flatMapComponents(
     matched.map(m => {
       // 将组件中的对象传入回调函数中，获得钩子函数数组
       return Object.keys(m.components).map(key =>
-        fn(m.components[key], m.instances[key], m, key)
+        fn(
+          m.components[key], // 组件、懒加载函数
+          m.instances[key], // 实例
+          m, // 路由记录
+          key // 视图名（一般为default）
+        )
       );
     })
   );
