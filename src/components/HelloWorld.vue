@@ -1,33 +1,29 @@
 <template>
-  <div class="hello"></div>
+  <div class="hello">
+    {{testArray}}
+    <div @click="click">点击</div>
+  </div>
 </template>
 
 <script>
-// import checksort from "../modules/is-sorted/index.js";
-// import slice from "../modules/slice.js/src/index";
-// import arrayFirst from "../modules/array-first/index";
-// import arrayLast from "../modules/array-last/index";
-import flatten from "../modules/arr-flatten/index";
-
 export default {
   name: "HelloWorld",
   data() {
     return {
-      msg: "Welcome to Your Vue.js App"
+      testArray: [{ value: "hello" }],
+      count: 1
     };
   },
-  mounted() {
-    // --- test is-sorted
-    // console.log(checksort([1, 2, 3]));
-    // --- test slice.js
-    // const arr = slice([1, "2", 3, "4", 5, "6", 7, "8", 9, "0"]);
-    // console.log(arr["5:1:-2"]);
-    // --- test arrayFirst
-    // console.log(arrayFirst(["a", "b", "c", "d", "e", "f"], -2));
-    // --- test arrayLast
-    // console.log(arrayLast(["a", "b", "c", "d", "e", "f"], 2));
-    // --- test arr-flatten
-    console.log(flatten(["a", ["b", ["c"]], "d", ["e"]]));
+  mounted() {},
+  methods: {
+    click() {
+      // 每次点击 字符串长度都以上一次为基础增加到5倍，拉大差异突出效果，并且之后在字符串头部加上count值做区分
+      this.count *= 5;
+      var str = new Array(this.count * 10).join(":");
+      this.testArray.push({
+        value: this.count + str
+      });
+    }
   }
 };
 </script>
